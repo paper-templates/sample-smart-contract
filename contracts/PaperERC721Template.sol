@@ -139,10 +139,6 @@ contract PaperERC721Template is
         return ownedTokenIds;
     }
 
-    function _startTokenId() internal view virtual override returns (uint256) {
-        return 1;
-    }
-
     function tokenURI(uint256 _tokenId)
         public
         view
