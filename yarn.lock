@@ -860,13 +860,6 @@
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.5.0.tgz#3fd75d57de172b3743cdfc1206883f56430409cc"
   integrity sha512-fdkzKPYMjrRiPK6K4y64e6GzULR7R7RwxSigHS8DDp7aWDeoReqsQI+cxHV1UuhAqX69L1lAaWDxenfP+xiqzA==
 
-"@paperxyz/contracts@^0.0.4":
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/@paperxyz/contracts/-/contracts-0.0.4.tgz#2b7bbe434b18bda9cb3363681f4d780aced54c70"
-  integrity sha512-4zIynPum4EEM0iteTPcoQlE6NU1Yh8+cSB6dds1++ZWBbszzy9wvss732vOOjKoeSMjdicBXF7L/2lx7rkStmg==
-  dependencies:
-    "@openzeppelin/contracts" "^4.4.2"
-
 "@resolver-engine/core@^0.3.3":
   version "0.3.3"
   resolved "https://registry.yarnpkg.com/@resolver-engine/core/-/core-0.3.3.tgz#590f77d85d45bc7ecc4e06c654f41345db6ca967"

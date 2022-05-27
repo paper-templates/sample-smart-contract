@@ -68,7 +68,5 @@
     "public-sale-close": "hardhat run scripts/7_public_sale_close.ts",
     "reveal": "hardhat run scripts/8_reveal.ts"
   },
-  "dependencies": {
-    "@paperxyz/contracts": "^0.0.4"
-  }
+  "dependencies": {}
 }

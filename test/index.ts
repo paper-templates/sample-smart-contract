@@ -34,13 +34,22 @@ describe("Paper mint function", function () {
     MintData: [
       { name: "recipient", type: "address" },
       { name: "quantity", type: "uint256" },
-      { name: "nonce", type: "uint256" },
+      { name: "nonce", type: "bytes32" },
     ],
+  };
+  const nonce = function (length: number) {
+    const possible =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let text = "";
+    for (let i = 0; i < length; i++) {
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
   };
   const message = {
     recipient: "0x450D82Ed59f9238FB7fa37E006B32b2c51c37596",
     quantity: 1,
-    nonce: 0,
+    nonce: ethers.utils.formatBytes32String(nonce(31)),
   };
 
   before(async function () {
@@ -70,7 +79,7 @@ describe("Paper mint function", function () {
 
     expect(
       await contract.walletOfOwner("0x450D82Ed59f9238FB7fa37E006B32b2c51c37596")
-    ).deep.equal([BigNumber.from(1)]);
+    ).deep.equal([BigNumber.from(0)]);
   });
   it("Minting with the same signature again should fail", async function () {
     const signature = await paperKeySigner._signTypedData(
@@ -179,6 +188,7 @@ describe(CollectionConfig.contractName, function () {
       CollectionConfig.preSale.maxMintAmountPerTx
     );
     await contract.setPaused(false);
+    await contract.setCost(getPrice(SaleType.PRE_SALE, 1));
     await contract
       .connect(holder)
       .mint(2, { value: getPrice(SaleType.PRE_SALE, 2) });
@@ -247,14 +257,14 @@ describe(CollectionConfig.contractName, function () {
 
   it("Wallet of owner", async function () {
     expect(await contract.walletOfOwner(await owner.getAddress())).deep.equal([
-      BigNumber.from(1),
+      BigNumber.from(0),
     ]);
     expect(
       await contract.walletOfOwner(await whitelistedUser.getAddress())
-    ).deep.equal([BigNumber.from(2), BigNumber.from(3), BigNumber.from(6)]);
+    ).deep.equal([BigNumber.from(1), BigNumber.from(4)]);
     expect(await contract.walletOfOwner(await holder.getAddress())).deep.equal([
-      BigNumber.from(4),
-      BigNumber.from(5),
+      BigNumber.from(2),
+      BigNumber.from(3),
     ]);
     expect(
       await contract.walletOfOwner(await externalUser.getAddress())
@@ -333,23 +343,22 @@ describe(CollectionConfig.contractName, function () {
     const uriSuffix = ".json";
     const totalSupply = await contract.totalSupply();
 
-    expect(await contract.tokenURI(1)).to.equal(
+    expect(await contract.tokenURI(0)).to.equal(
       CollectionConfig.hiddenMetadataUri
     );
 
     // Reveal collection
     await contract.setUriPrefix(uriPrefix);
     await contract.setRevealed(true);
-
     // ERC721A uses token IDs starting from 0 internally...
-    await expect(contract.tokenURI(0)).to.be.revertedWith(
+    await expect(contract.tokenURI(11)).to.be.revertedWith(
       "ERC721Metadata: URI query for nonexistent token"
     );
 
     // Testing first and last minted tokens
     expect(await contract.tokenURI(1)).to.equal(`${uriPrefix}1${uriSuffix}`);
-    expect(await contract.tokenURI(totalSupply)).to.equal(
-      `${uriPrefix}${totalSupply}${uriSuffix}`
+    expect(await contract.tokenURI(totalSupply.sub(1))).to.equal(
+      `${uriPrefix}${totalSupply.sub(1)}${uriSuffix}`
     );
   });
 });
