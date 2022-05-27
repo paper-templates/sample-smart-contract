@@ -74,11 +74,11 @@ contract PaperERC721Template is
     {
         // todo: add your error reasons here.
         if (paused) {
-            return "Minting not yet started";
+            return "NOT_LIVE";
         } else if (_quantity > maxMintAmountPerTx) {
-            return "Attempting to mint too many NFTs!";
+            return "MAX_MINT_AMOUNT_PER_TRANSACTION_EXCEEDED";
         } else if (totalSupply() + _quantity > maxSupply) {
-            return "Not enough NFTs left";
+            return "NOT_ENOUGH_SUPPLY";
         }
         return "";
     }
