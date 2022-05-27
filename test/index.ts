@@ -42,17 +42,87 @@ function getPrice(saleType: SaleType, mintAmount: number) {
   return utils.parseEther(saleType.toString()).mul(mintAmount);
 }
 
+describe("Paper mint function", function () {
+  let owner!: SignerWithAddress;
+  let paperKeySigner!: SignerWithAddress;
+  let externalUser!: SignerWithAddress;
+  let contract!: NftContractType;
+  let domain: {
+    name: string;
+    version: string;
+    chainId: number;
+    verifyingContract: string;
+  };
+  const types = {
+    MintData: [
+      { name: "recipient", type: "address" },
+      { name: "quantity", type: "uint256" },
+      { name: "nonce", type: "uint256" },
+    ],
+  };
+  const message = {
+    recipient: "0x450D82Ed59f9238FB7fa37E006B32b2c51c37596",
+    quantity: 1,
+    nonce: 0,
+  };
+
+  before(async function () {
+    const Contract = await ethers.getContractFactory(
+      CollectionConfig.contractName
+    );
+    Contract.connect(owner);
+    contract = (await Contract.deploy(...ContractArguments)) as NftContractType;
+    await contract.deployed();
+
+    [owner, externalUser, paperKeySigner] = await ethers.getSigners();
+    domain = {
+      name: "Paper",
+      version: "1",
+      chainId: await paperKeySigner.getChainId(),
+      verifyingContract: contract.address,
+    };
+  });
+
+  it("Paper generated signature can mint", async function () {
+    const signature = await paperKeySigner._signTypedData(
+      domain,
+      types,
+      message
+    );
+    await (await contract.paperMint({ ...message, signature }, "0x")).wait();
+
+    expect(
+      await contract.walletOfOwner("0x450D82Ed59f9238FB7fa37E006B32b2c51c37596")
+    ).deep.equal([BigNumber.from(1)]);
+  });
+  it("Minting with the same signature again should fail", async function () {
+    const signature = await paperKeySigner._signTypedData(
+      domain,
+      types,
+      message
+    );
+    expect(
+      contract.paperMint({ ...message, signature }, "0x")
+    ).to.be.revertedWith("Mint request already processed");
+  });
+
+  it("Non paper wallets cannot generate signature to mint", async function () {
+    const signature = await externalUser._signTypedData(domain, types, message);
+    expect(
+      contract.paperMint({ ...message, signature }, "0x")
+    ).to.be.revertedWith("Invalid signature");
+  });
+});
+
 describe(CollectionConfig.contractName, function () {
   let owner!: SignerWithAddress;
   let whitelistedUser!: SignerWithAddress;
   let holder!: SignerWithAddress;
   let externalUser!: SignerWithAddress;
-  let paperKeySigner!: SignerWithAddress;
   let contract!: NftContractType;
 
   before(async function () {
-    [owner, whitelistedUser, holder, externalUser, paperKeySigner] =
-      await ethers.getSigners();
+    [owner, whitelistedUser, holder, externalUser] = await ethers.getSigners();
   });
 
   it("Contract deployment", async function () {
@@ -441,38 +511,5 @@ describe(CollectionConfig.contractName, function () {
     expect(await contract.tokenURI(totalSupply)).to.equal(
       `${uriPrefix}${totalSupply}${uriSuffix}`
     );
-  });
-
-  it("Paper mint function", async function () {
-    contract.connect(externalUser);
-
-    const domain = {
-      name: "Paper",
-      version: "1",
-      chainId: await paperKeySigner.getChainId(),
-      verifyingContract: contract.address,
-    };
-    const types = {
-      MintData: [
-        { name: "recipient", type: "address" },
-        { name: "quantity", type: "uint256" },
-        { name: "nonce", type: "uint256" },
-      ],
-    };
-    const message = {
-      recipient: "0x450D82Ed59f9238FB7fa37E006B32b2c51c37596",
-      quantity: 1,
-      nonce: 0,
-    };
-    const signature = await paperKeySigner._signTypedData(
-      domain,
-      types,
-      message
-    );
-    await (await contract.paperMint({ ...message, signature }, "0x")).wait();
-
-    expect(
-      await contract.walletOfOwner("0x450D82Ed59f9238FB7fa37E006B32b2c51c37596")
-    ).deep.equal([BigNumber.from(7)]);
   });
 });

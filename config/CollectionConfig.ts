@@ -10,7 +10,8 @@ const CollectionConfig: CollectionConfigInterface = {
   // yarn rename-contract NEW_CONTRACT_NAME
   // Please DO NOT change it manually!
   contractName: "PaperERC721Template",
-  paperKey: "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+  // Update this with the generated paper key given!
+  paperKey: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
   tokenName: "Paper ERC721 Template",
   tokenSymbol: "PET",
   hiddenMetadataUri: "ipfs://__CID__/hidden.json",

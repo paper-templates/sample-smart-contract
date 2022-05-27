@@ -16,9 +16,6 @@ contract PaperERC721Template is
 {
     using Strings for uint256;
 
-    bytes32 public merkleRoot;
-    mapping(address => bool) public whitelistClaimed;
-
     string public uriPrefix = "";
     string public uriSuffix = ".json";
     string public hiddenMetadataUri;
@@ -28,7 +25,6 @@ contract PaperERC721Template is
     uint256 public maxMintAmountPerTx;
 
     bool public paused = true;
-    bool public whitelistMintEnabled = false;
     bool public revealed = false;
 
     constructor(
@@ -63,31 +59,32 @@ contract PaperERC721Template is
         _;
     }
 
-    function whitelistMint(uint256 _mintAmount, bytes32[] calldata _merkleProof)
-        public
-        payable
-        mintCompliance(_mintAmount)
-        mintPriceCompliance(_mintAmount)
-    {
-        // Verify whitelist requirements
-        require(whitelistMintEnabled, "The whitelist sale is not enabled!");
-        require(!whitelistClaimed[_msgSender()], "Address already claimed!");
-        bytes32 leaf = keccak256(abi.encodePacked(_msgSender()));
-        require(
-            MerkleProof.verify(_merkleProof, merkleRoot, leaf),
-            "Invalid proof!"
-        );
-
-        whitelistClaimed[_msgSender()] = true;
-        _safeMint(_msgSender(), _mintAmount);
-    }
-
     function paperMint(
         PaperMintData.MintData calldata _mintData,
         bytes calldata _data
     ) external onlyPaper(_mintData) {
         // your mint info here.
         _safeMint(_mintData.recipient, _mintData.quantity, _data);
+    }
+
+    function getErrorReasons(address _recipient, uint256 _quantity)
+        external
+        view
+        returns (string memory)
+    {
+        // todo: add your error reasons here.
+        if (paused) {
+            return "Minting not yet started";
+        } else if (_quantity > maxMintAmountPerTx) {
+            return "Attempting to mint too many NFTs!";
+        } else if (totalSupply() + _quantity > maxSupply) {
+            return "Not enough NFTs left";
+        }
+        return "";
+    }
+
+    function getUnclaimedSupply() external view returns (uint256) {
+        return maxSupply - totalSupply();
     }
 
     function mint(uint256 _mintAmount)
@@ -207,14 +204,6 @@ contract PaperERC721Template is
 
     function setPaused(bool _state) public onlyOwner {
         paused = _state;
-    }
-
-    function setMerkleRoot(bytes32 _merkleRoot) public onlyOwner {
-        merkleRoot = _merkleRoot;
-    }
-
-    function setWhitelistMintEnabled(bool _state) public onlyOwner {
-        whitelistMintEnabled = _state;
     }
 
     function withdraw() public onlyOwner nonReentrant {

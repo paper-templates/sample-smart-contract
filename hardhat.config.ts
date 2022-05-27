@@ -206,24 +206,6 @@ const config: HardhatUserConfig = {
   },
 };
 
-// Setup "testnet" network
-if (process.env.NETWORK_TESTNET_URL !== undefined) {
-  config.networks!.testnet = {
-    url: process.env.NETWORK_TESTNET_URL,
-    accounts: [process.env.NETWORK_TESTNET_PRIVATE_KEY!],
-    gasMultiplier: DEFAULT_GAS_MULTIPLIER,
-  };
-}
-
-// Setup "mainnet" network
-if (process.env.NETWORK_MAINNET_URL !== undefined) {
-  config.networks!.mainnet = {
-    url: process.env.NETWORK_MAINNET_URL,
-    accounts: [process.env.NETWORK_MAINNET_PRIVATE_KEY!],
-    gasMultiplier: DEFAULT_GAS_MULTIPLIER,
-  };
-}
-
 export default config;
 
 /**
