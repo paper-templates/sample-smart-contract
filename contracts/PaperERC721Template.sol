@@ -83,7 +83,7 @@ contract PaperERC721Template is
         return "";
     }
 
-    function getUnclaimedSupply() external view returns (uint256) {
+    function unclaimedSupply() external view returns (uint256) {
         return maxSupply - totalSupply();
     }
 
