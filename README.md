@@ -5,6 +5,8 @@
 </p>
 <h1 align="center">Paper ERC721 Demo Contract</h1>
 
+# WORK IN PROGRESS
+
 This repository contains a paper compatible contract built off the [HashLips ERC721 collection](https://github.com/hashlips-lab/nft-erc721-collection).
 
 Got questions? [Check in](https://github.com/hashlips-lab/nft-erc721-collection/issues) with the HashLips community.
