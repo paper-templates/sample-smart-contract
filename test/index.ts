@@ -31,8 +31,11 @@ describe("Paper mint function", function () {
     verifyingContract: string;
   };
   const types = {
-    MintData: [
-      { name: "recipient", type: "address" },
+    PrimaryData: [
+      {
+        name: "recipient",
+        type: "address",
+      },
       { name: "quantity", type: "uint256" },
       { name: "nonce", type: "bytes32" },
     ],
@@ -48,6 +51,7 @@ describe("Paper mint function", function () {
   };
   const message = {
     recipient: "0x450D82Ed59f9238FB7fa37E006B32b2c51c37596",
+
     quantity: 1,
     nonce: ethers.utils.formatBytes32String(nonce(31)),
   };
@@ -75,7 +79,13 @@ describe("Paper mint function", function () {
       types,
       message
     );
-    await (await contract.paperMint({ ...message, signature }, "0x")).wait();
+
+    await contract.paperMint(
+      message.recipient,
+      message.quantity,
+      message.nonce,
+      signature
+    );
 
     expect(
       await contract.walletOfOwner("0x450D82Ed59f9238FB7fa37E006B32b2c51c37596")
@@ -87,15 +97,25 @@ describe("Paper mint function", function () {
       types,
       message
     );
-    expect(
-      contract.paperMint({ ...message, signature }, "0x")
-    ).to.be.revertedWith("Mint request already processed");
+    await expect(
+      contract.paperMint(
+        message.recipient,
+        message.quantity,
+        message.nonce,
+        signature
+      )
+    ).to.be.revertedWith("'Mint request already processed");
   });
 
   it("Non paper wallets cannot generate signature to mint", async function () {
     const signature = await externalUser._signTypedData(domain, types, message);
-    expect(
-      contract.paperMint({ ...message, signature }, "0x")
+    await expect(
+      contract.paperMint(
+        message.recipient,
+        message.quantity,
+        message.nonce,
+        signature
+      )
     ).to.be.revertedWith("Invalid signature");
   });
 });

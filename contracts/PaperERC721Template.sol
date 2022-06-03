@@ -60,11 +60,28 @@ contract PaperERC721Template is
     }
 
     function paperMint(
-        PaperMintData.MintData calldata _mintData,
-        bytes calldata _data
-    ) external onlyPaper(_mintData) {
-        // your mint info here.
-        _safeMint(_mintData.recipient, _mintData.quantity, _data);
+        address _recipient,
+        uint256 _quantity,
+        // Paper params
+        bytes32 _nonce,
+        bytes calldata _signature
+    )
+        external
+        onlyPaper(
+            abi.encode(
+                keccak256(
+                    "PrimaryData(address recipient,uint256 quantity,bytes32 nonce)"
+                ),
+                _recipient,
+                _quantity,
+                _nonce
+            ),
+            _nonce,
+            _signature
+        )
+    {
+        // todo: your mint info here.
+        _safeMint(_recipient, _quantity);
     }
 
     function getErrorReasons(address _recipient, uint256 _quantity)
@@ -74,11 +91,11 @@ contract PaperERC721Template is
     {
         // todo: add your error reasons here.
         if (paused) {
-            return "NOT_LIVE";
+            return "Not live yet";
         } else if (_quantity > maxMintAmountPerTx) {
-            return "MAX_MINT_AMOUNT_PER_TRANSACTION_EXCEEDED";
+            return "max mint amount per transaction exceeded";
         } else if (totalSupply() + _quantity > maxSupply) {
-            return "NOT_ENOUGH_SUPPLY";
+            return "not enough supply";
         }
         return "";
     }
