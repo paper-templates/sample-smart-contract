@@ -104,6 +104,10 @@ contract PaperERC721Template is
         return maxSupply - totalSupply();
     }
 
+    function setPaperKey(address _paperKey) external onlyOwner {
+        _setPaperKey(_paperKey);
+    }
+
     function mint(uint256 _mintAmount)
         public
         payable
