@@ -60,27 +60,20 @@ contract PaperERC721Template is
     }
 
     function paperMint(
-        address _recipient,
-        uint256 _quantity,
-        // Paper params
-        bytes32 _nonce,
-        bytes calldata _signature
-    )
-        external
-        onlyPaper(
-            abi.encode(
-                keccak256(
-                    "PrimaryData(address recipient,uint256 quantity,bytes32 nonce)"
-                ),
-                _recipient,
-                _quantity,
-                _nonce
-            ),
-            _nonce,
-            _signature
-        )
-    {
+        PaperMintData.MintData calldata _mintData,
+        bytes memory data
+    ) external payable onlyPaper(_mintData) {
         // todo: your mint info here.
+        _safeMint(_mintData.recipient, _mintData.quantity, data);
+    }
+
+    function claimTo(address _recipient, uint256 _quantity)
+        external
+        payable
+        mintCompliance(_quantity)
+        mintPriceCompliance(_quantity)
+    {
+        require(!paused, "The contract is paused!");
         _safeMint(_recipient, _quantity);
     }
 
@@ -106,16 +99,6 @@ contract PaperERC721Template is
 
     function setPaperKey(address _paperKey) external onlyOwner {
         _setPaperKey(_paperKey);
-    }
-
-    function mint(uint256 _mintAmount)
-        public
-        payable
-        mintCompliance(_mintAmount)
-        mintPriceCompliance(_mintAmount)
-    {
-        require(!paused, "The contract is paused!");
-        _safeMint(_msgSender(), _mintAmount);
     }
 
     function mintForAddress(uint256 _mintAmount, address _receiver)
@@ -224,22 +207,8 @@ contract PaperERC721Template is
     }
 
     function withdraw() public onlyOwner nonReentrant {
-        // This will pay HashLips Lab Team 5% of the initial sale.
-        // By leaving the following lines as they are you will contribute to the
-        // development of tools like this and many others.
-        // =============================================================================
-        (bool hs, ) = payable(0x146FB9c3b2C13BA88c6945A759EbFa95127486F4).call{
-            value: (address(this).balance * 5) / 100
-        }("");
-        require(hs);
-        // =============================================================================
-
-        // This will transfer the remaining contract balance to the owner.
-        // Do not remove this otherwise you will not be able to withdraw the funds.
-        // =============================================================================
         (bool os, ) = payable(owner()).call{value: address(this).balance}("");
-        require(os);
-        // =============================================================================
+        require(os, "Withdrawal failed!");
     }
 
     function _baseURI() internal view virtual override returns (string memory) {

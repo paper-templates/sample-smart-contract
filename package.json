@@ -69,6 +69,6 @@
     "reveal": "hardhat run scripts/8_reveal.ts"
   },
   "dependencies": {
-    "@paperxyz/contracts": "^0.0.10"
+    "@paperxyz/contracts": "^0.0.14"
   }
 }

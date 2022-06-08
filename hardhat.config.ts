@@ -168,12 +168,12 @@ const config: HardhatUserConfig = {
       gasMultiplier: DEFAULT_GAS_MULTIPLIER,
     },
     rinkeby: {
-      url: `eth-rinkeby.alchemyapi.io/v2/${process.env.NETWORK_TESTNET_URL}`,
+      url: `eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
       accounts: [process.env.RINKEBY_PRIVATE_KEY!],
       gasMultiplier: DEFAULT_GAS_MULTIPLIER,
     },
     mainnet: {
-      url: `eth-mainnet.alchemyapi.io/v2/${process.env.NETWORK_TESTNET_URL}`,
+      url: `eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
       accounts: [process.env.ETH_PRIVATE_KEY!],
       gasMultiplier: DEFAULT_GAS_MULTIPLIER,
     },

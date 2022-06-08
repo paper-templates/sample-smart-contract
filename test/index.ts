@@ -31,15 +31,23 @@ describe("Paper mint function", function () {
     verifyingContract: string;
   };
   const types = {
-    PrimaryData: [
+    MintData: [
       {
         name: "recipient",
         type: "address",
       },
       { name: "quantity", type: "uint256" },
+      { name: "tokenId", type: "uint256" },
       { name: "nonce", type: "bytes32" },
     ],
   };
+  let message!: {
+    recipient: string;
+    quantity: number;
+    tokenId: number;
+    nonce: string;
+  };
+
   const nonce = function (length: number) {
     const possible =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -49,27 +57,30 @@ describe("Paper mint function", function () {
     }
     return text;
   };
-  const message = {
-    recipient: "0x450D82Ed59f9238FB7fa37E006B32b2c51c37596",
-
-    quantity: 1,
-    nonce: ethers.utils.formatBytes32String(nonce(31)),
-  };
 
   before(async function () {
+    [owner, externalUser, paperKeySigner] = await ethers.getSigners();
     const Contract = await ethers.getContractFactory(
       CollectionConfig.contractName
     );
     Contract.connect(owner);
-    contract = (await Contract.deploy(...ContractArguments)) as NftContractType;
+    contract = (await Contract.deploy(
+      paperKeySigner.address,
+      ...ContractArguments.slice(1)
+    )) as NftContractType;
     await contract.deployed();
 
-    [owner, externalUser, paperKeySigner] = await ethers.getSigners();
     domain = {
       name: "Paper",
       version: "1",
       chainId: await paperKeySigner.getChainId(),
       verifyingContract: contract.address,
+    };
+    message = {
+      recipient: externalUser.address,
+      tokenId: 0,
+      quantity: 1,
+      nonce: ethers.utils.formatBytes32String(nonce(31)),
     };
   });
 
@@ -80,16 +91,11 @@ describe("Paper mint function", function () {
       message
     );
 
-    await contract.paperMint(
-      message.recipient,
-      message.quantity,
-      message.nonce,
-      signature
-    );
+    await contract.paperMint({ ...message, signature }, "0x");
 
-    expect(
-      await contract.walletOfOwner("0x450D82Ed59f9238FB7fa37E006B32b2c51c37596")
-    ).deep.equal([BigNumber.from(0)]);
+    expect(await contract.walletOfOwner(externalUser.address)).deep.equal([
+      BigNumber.from(0),
+    ]);
   });
   it("Minting with the same signature again should fail", async function () {
     const signature = await paperKeySigner._signTypedData(
@@ -98,24 +104,14 @@ describe("Paper mint function", function () {
       message
     );
     await expect(
-      contract.paperMint(
-        message.recipient,
-        message.quantity,
-        message.nonce,
-        signature
-      )
+      contract.paperMint({ ...message, signature }, "0x")
     ).to.be.revertedWith("'Mint request already processed");
   });
 
   it("Non paper wallets cannot generate signature to mint", async function () {
     const signature = await externalUser._signTypedData(domain, types, message);
     await expect(
-      contract.paperMint(
-        message.recipient,
-        message.quantity,
-        message.nonce,
-        signature
-      )
+      contract.paperMint({ ...message, signature }, "0x")
     ).to.be.revertedWith("Invalid signature");
   });
 });
@@ -163,20 +159,20 @@ describe(CollectionConfig.contractName, function () {
   it("Before any sale", async function () {
     // Nobody should be able to mint from a paused contract
     await expect(
-      contract
-        .connect(whitelistedUser)
-        .mint(1, { value: getPrice(SaleType.WHITELIST, 1) })
+      contract.connect(whitelistedUser).claimTo(whitelistedUser.address, 1, {
+        value: getPrice(SaleType.WHITELIST, 1),
+      })
     ).to.be.revertedWith("The contract is paused!");
     expect(
       contract
         .connect(holder)
-        .mint(1, { value: getPrice(SaleType.WHITELIST, 1) })
+        .claimTo(holder.address, 1, { value: getPrice(SaleType.WHITELIST, 1) })
     ).to.be.revertedWith("The contract is paused!");
 
     await expect(
       contract
         .connect(owner)
-        .mint(1, { value: getPrice(SaleType.WHITELIST, 1) })
+        .claimTo(owner.address, 1, { value: getPrice(SaleType.WHITELIST, 1) })
     ).to.be.revertedWith("The contract is paused!");
 
     // The owner should always be able to run mintForAddress
@@ -211,15 +207,17 @@ describe(CollectionConfig.contractName, function () {
     await contract.setCost(getPrice(SaleType.PRE_SALE, 1));
     await contract
       .connect(holder)
-      .mint(2, { value: getPrice(SaleType.PRE_SALE, 2) });
+      .claimTo(holder.address, 2, { value: getPrice(SaleType.PRE_SALE, 2) });
     await contract
       .connect(whitelistedUser)
-      .mint(1, { value: getPrice(SaleType.PRE_SALE, 1) });
+      .claimTo(whitelistedUser.address, 1, {
+        value: getPrice(SaleType.PRE_SALE, 1),
+      });
     // Sending insufficient funds
     await expect(
-      contract
-        .connect(holder)
-        .mint(1, { value: getPrice(SaleType.PRE_SALE, 1).sub(1) })
+      contract.connect(holder).claimTo(holder.address, 1, {
+        value: getPrice(SaleType.PRE_SALE, 1).sub(1),
+      })
     ).to.be.rejectedWith(
       Error,
       "insufficient funds for intrinsic transaction cost"
@@ -228,12 +226,16 @@ describe(CollectionConfig.contractName, function () {
     await expect(
       contract
         .connect(whitelistedUser)
-        .mint(await (await contract.maxMintAmountPerTx()).add(1), {
-          value: getPrice(
-            SaleType.PRE_SALE,
-            await (await contract.maxMintAmountPerTx()).add(1).toNumber()
-          ),
-        })
+        .claimTo(
+          whitelistedUser.address,
+          await (await contract.maxMintAmountPerTx()).add(1),
+          {
+            value: getPrice(
+              SaleType.PRE_SALE,
+              await (await contract.maxMintAmountPerTx()).add(1).toNumber()
+            ),
+          }
+        )
     ).to.be.revertedWith("Invalid mint amount!");
 
     // Pause pre-sale
@@ -311,20 +313,22 @@ describe(CollectionConfig.contractName, function () {
     await Promise.all(
       Array(iterations).map(
         async () =>
-          await contract.connect(whitelistedUser).mint(maxMintAmountPerTx, {
-            value: getPrice(SaleType.PUBLIC_SALE, maxMintAmountPerTx),
-          })
+          await contract
+            .connect(whitelistedUser)
+            .claimTo(whitelistedUser.address, maxMintAmountPerTx, {
+              value: getPrice(SaleType.PUBLIC_SALE, maxMintAmountPerTx),
+            })
       )
     );
 
     // Try to mint over max supply (before sold-out)
     await expect(
-      contract.connect(holder).mint(lastMintAmount + 1, {
+      contract.connect(holder).claimTo(holder.address, lastMintAmount + 1, {
         value: getPrice(SaleType.PUBLIC_SALE, lastMintAmount + 1),
       })
     ).to.be.revertedWith("Max supply exceeded!");
     await expect(
-      contract.connect(holder).mint(lastMintAmount + 2, {
+      contract.connect(holder).claimTo(holder.address, lastMintAmount + 2, {
         value: getPrice(SaleType.PUBLIC_SALE, lastMintAmount + 2),
       })
     ).to.be.revertedWith("Max supply exceeded!");
@@ -332,7 +336,7 @@ describe(CollectionConfig.contractName, function () {
     expect(await contract.totalSupply()).to.equal(expectedTotalSupply);
 
     // Mint last tokens with owner address and test walletOfOwner(...)
-    await contract.connect(owner).mint(lastMintAmount, {
+    await contract.connect(owner).claimTo(owner.address, lastMintAmount, {
       value: getPrice(SaleType.PUBLIC_SALE, lastMintAmount),
     });
     const expectedWalletOfOwner = [BigNumber.from(1)];
@@ -350,9 +354,9 @@ describe(CollectionConfig.contractName, function () {
 
     // Try to mint over max supply (after sold-out)
     await expect(
-      contract
-        .connect(whitelistedUser)
-        .mint(1, { value: getPrice(SaleType.PUBLIC_SALE, 1) })
+      contract.connect(whitelistedUser).claimTo(whitelistedUser.address, 1, {
+        value: getPrice(SaleType.PUBLIC_SALE, 1),
+      })
     ).to.be.revertedWith("Max supply exceeded!");
 
     expect(await contract.totalSupply()).to.equal(CollectionConfig.maxSupply);
