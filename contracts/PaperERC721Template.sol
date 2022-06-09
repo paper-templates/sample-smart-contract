@@ -21,7 +21,7 @@ contract PaperERC721Template is
     string public uriSuffix = "";
     string public hiddenMetadataUri;
 
-    uint256 public cost;
+    uint256 public price;
     uint256 public maxSupply;
     uint256 public maxMintAmountPerTx;
 
@@ -56,7 +56,7 @@ contract PaperERC721Template is
     }
 
     modifier mintPriceCompliance(uint256 _mintAmount) {
-        require(msg.value >= cost * _mintAmount, "Insufficient funds!");
+        require(msg.value >= price * _mintAmount, "Insufficient funds!");
         _;
     }
 
@@ -188,7 +188,7 @@ contract PaperERC721Template is
     }
 
     function setPrice(uint256 _price) public onlyOwner {
-        cost = _price;
+        price = _price;
     }
 
     function setMaxMintAmountPerTx(uint256 _maxMintAmountPerTx)
