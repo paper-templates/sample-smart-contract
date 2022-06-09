@@ -17,7 +17,7 @@ contract PaperERC721Template is
     using Strings for uint256;
 
     string public uriPrefix = "";
-    string public uriSuffix = ".json";
+    string public uriSuffix = "";
     string public hiddenMetadataUri;
 
     uint256 public cost;
@@ -73,6 +73,7 @@ contract PaperERC721Template is
     }
 
     /// @dev used for native minting on Paper platform.
+    /// Also used if you don't intend to take advantage of the Fiat or Cross Chain Crypto features in the paperMint method.
     /// @param _recipient address of the recipient
     /// @param _quantity quantity of the token to mint
     function claimTo(address _recipient, uint256 _quantity)
