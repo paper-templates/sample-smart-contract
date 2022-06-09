@@ -16,7 +16,8 @@ contract PaperERC721Template is
 {
     using Strings for uint256;
 
-    string public uriPrefix = "";
+    string public uriPrefix =
+        "ipfs://QmZxqFxfHwqjGSYSKyVp7AR1qKQjy6Bq4YSo7GbnbnE6gc";
     string public uriSuffix = "";
     string public hiddenMetadataUri;
 
