@@ -10,12 +10,12 @@ async function main() {
   const publicSalePrice = utils.parseEther(
     CollectionConfig.publicSale.price.toString()
   );
-  if (!(await (await contract.cost()).eq(publicSalePrice))) {
+  if (!(await (await contract.price()).eq(publicSalePrice))) {
     console.log(
       `Updating the token price to ${CollectionConfig.publicSale.price} ${CollectionConfig.mainnet.symbol}...`
     );
 
-    await (await contract.setCost(publicSalePrice)).wait();
+    await (await contract.setPrice(publicSalePrice)).wait();
   }
 
   // Update max amount per TX (if needed)
