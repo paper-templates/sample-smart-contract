@@ -59,25 +59,34 @@ contract PaperERC721Template is
         _;
     }
 
+    /// @dev Used after a user completes a fiat or cross chain crypto payment by paper's backend to mint a new token for user.
+    /// Should _not_ have price check if you intend to off ramp in Fiat or if you want dynamic pricing.
+    /// Enables custom metadata to be passed to the contract for whitelist, custom params, etc. via bytes data
+    /// @param _mintData Contains information on the tokenId, quantity, recipient and more.
     function paperMint(
         PaperMintData.MintData calldata _mintData,
         bytes memory data
-    ) external payable onlyPaper(_mintData) {
-        // todo: your mint info here.
+    ) external payable onlyPaper(_mintData) mintCompliance(_mintData.quantity) {
+        // todo: your mint method here.
+        require(!paused, "The contract is paused!");
         _safeMint(_mintData.recipient, _mintData.quantity, data);
     }
 
+    /// @dev used for native minting on Paper platform.
+    /// @param _recipient address of the recipient
+    /// @param _quantity quantity of the token to mint
     function claimTo(address _recipient, uint256 _quantity)
         external
         payable
         mintCompliance(_quantity)
         mintPriceCompliance(_quantity)
     {
+        // todo: your mint method here.
         require(!paused, "The contract is paused!");
         _safeMint(_recipient, _quantity);
     }
 
-    function getErrorReasons(address _recipient, uint256 _quantity)
+    function getClaimIneligibilityReason(address _recipient, uint256 _quantity)
         external
         view
         returns (string memory)
