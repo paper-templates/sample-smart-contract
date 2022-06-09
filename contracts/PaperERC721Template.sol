@@ -32,12 +32,12 @@ contract PaperERC721Template is
         address _paperKey,
         string memory _tokenName,
         string memory _tokenSymbol,
-        uint256 _cost,
+        uint256 _price,
         uint256 _maxSupply,
         uint256 _maxMintAmountPerTx,
         string memory _hiddenMetadataUri
     ) ERC721A(_tokenName, _tokenSymbol) PaperVerification(_paperKey) {
-        setCost(_cost);
+        setPrice(_price);
         maxSupply = _maxSupply;
         setMaxMintAmountPerTx(_maxMintAmountPerTx);
         setHiddenMetadataUri(_hiddenMetadataUri);
@@ -187,8 +187,8 @@ contract PaperERC721Template is
         revealed = _state;
     }
 
-    function setCost(uint256 _cost) public onlyOwner {
-        cost = _cost;
+    function setPrice(uint256 _price) public onlyOwner {
+        cost = _price;
     }
 
     function setMaxMintAmountPerTx(uint256 _maxMintAmountPerTx)
