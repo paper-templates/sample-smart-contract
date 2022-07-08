@@ -64,13 +64,15 @@ contract PaperERC721Template is
     /// Should _not_ have price check if you intend to off ramp in Fiat or if you want dynamic pricing.
     /// Enables custom metadata to be passed to the contract for whitelist, custom params, etc. via bytes data
     /// @param _mintData Contains information on the tokenId, quantity, recipient and more.
-    function paperMint(
-        PaperMintData.MintData calldata _mintData,
-        bytes memory data
-    ) external payable onlyPaper(_mintData) mintCompliance(_mintData.quantity) {
+    function paperMint(PaperMintData.MintData calldata _mintData)
+        external
+        payable
+        onlyPaper(_mintData)
+        mintCompliance(_mintData.quantity)
+    {
         // todo: your mint method here.
         require(!paused, "The contract is paused!");
-        _safeMint(_mintData.recipient, _mintData.quantity, data);
+        _safeMint(_mintData.recipient, _mintData.quantity, _mintData.data);
     }
 
     /// @dev used for native minting on Paper platform.

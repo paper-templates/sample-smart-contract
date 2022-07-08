@@ -39,6 +39,7 @@ describe("Paper mint function", function () {
       { name: "quantity", type: "uint256" },
       { name: "tokenId", type: "uint256" },
       { name: "nonce", type: "bytes32" },
+      { name: "data", type: "bytes" },
     ],
   };
   let message!: {
@@ -46,6 +47,7 @@ describe("Paper mint function", function () {
     quantity: number;
     tokenId: number;
     nonce: string;
+    data: Uint8Array;
   };
 
   const nonce = function (length: number) {
@@ -81,7 +83,10 @@ describe("Paper mint function", function () {
       tokenId: 0,
       quantity: 1,
       nonce: ethers.utils.formatBytes32String(nonce(31)),
+      data: ethers.utils.arrayify("0x"),
     };
+
+    await contract.setPaused(false);
   });
 
   it("Paper generated signature can mint", async function () {
@@ -91,7 +96,7 @@ describe("Paper mint function", function () {
       message
     );
 
-    await contract.paperMint({ ...message, signature }, "0x");
+    await contract.paperMint({ ...message, signature });
 
     expect(await contract.walletOfOwner(externalUser.address)).deep.equal([
       BigNumber.from(0),
@@ -104,14 +109,14 @@ describe("Paper mint function", function () {
       message
     );
     await expect(
-      contract.paperMint({ ...message, signature }, "0x")
+      contract.paperMint({ ...message, signature })
     ).to.be.revertedWith("'Mint request already processed");
   });
 
   it("Non paper wallets cannot generate signature to mint", async function () {
     const signature = await externalUser._signTypedData(domain, types, message);
     await expect(
-      contract.paperMint({ ...message, signature }, "0x")
+      contract.paperMint({ ...message, signature })
     ).to.be.revertedWith("Invalid signature");
   });
 });
@@ -139,7 +144,7 @@ describe(CollectionConfig.contractName, function () {
   it("Check initial data", async function () {
     expect(await contract.name()).to.equal(CollectionConfig.tokenName);
     expect(await contract.symbol()).to.equal(CollectionConfig.tokenSymbol);
-    expect(await contract.cost()).to.equal(getPrice(SaleType.WHITELIST, 1));
+    expect(await contract.price()).to.equal(getPrice(SaleType.WHITELIST, 1));
     expect(await contract.maxSupply()).to.equal(CollectionConfig.maxSupply);
     expect(await contract.maxMintAmountPerTx()).to.equal(
       CollectionConfig.whitelistSale.maxMintAmountPerTx
@@ -204,7 +209,7 @@ describe(CollectionConfig.contractName, function () {
       CollectionConfig.preSale.maxMintAmountPerTx
     );
     await contract.setPaused(false);
-    await contract.setCost(getPrice(SaleType.PRE_SALE, 1));
+    await contract.setPrice(getPrice(SaleType.PRE_SALE, 1));
     await contract
       .connect(holder)
       .claimTo(holder.address, 2, { value: getPrice(SaleType.PRE_SALE, 2) });
@@ -240,7 +245,7 @@ describe(CollectionConfig.contractName, function () {
 
     // Pause pre-sale
     await contract.setPaused(true);
-    await contract.setCost(
+    await contract.setPrice(
       utils.parseEther(CollectionConfig.publicSale.price.toString())
     );
   });
@@ -255,7 +260,7 @@ describe(CollectionConfig.contractName, function () {
       contract.connect(externalUser).setRevealed(false)
     ).to.be.revertedWith("Ownable: caller is not the owner");
     await expect(
-      contract.connect(externalUser).setCost(utils.parseEther("0.0000001"))
+      contract.connect(externalUser).setPrice(utils.parseEther("0.0000001"))
     ).to.be.revertedWith("Ownable: caller is not the owner");
     await expect(
       contract.connect(externalUser).setMaxMintAmountPerTx(99999)
@@ -373,6 +378,7 @@ describe(CollectionConfig.contractName, function () {
 
     // Reveal collection
     await contract.setUriPrefix(uriPrefix);
+    await contract.setUriSuffix(uriSuffix);
     await contract.setRevealed(true);
     // ERC721A uses token IDs starting from 0 internally...
     await expect(contract.tokenURI(11)).to.be.revertedWith(

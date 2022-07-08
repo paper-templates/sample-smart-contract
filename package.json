@@ -14,6 +14,7 @@
     "@nomiclabs/hardhat-etherscan": "^3.0.3",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/contracts": "^4.4.2",
+    "@paperxyz/contracts": "^0.0.16",
     "@typechain/ethers-v5": "^7.2.0",
     "@typechain/hardhat": "^2.3.1",
     "@types/chai": "^4.3.0",
@@ -68,7 +69,5 @@
     "public-sale-close": "hardhat run scripts/7_public_sale_close.ts",
     "reveal": "hardhat run scripts/8_reveal.ts"
   },
-  "dependencies": {
-    "@paperxyz/contracts": "^0.0.15"
-  }
+  "dependencies": {}
 }
