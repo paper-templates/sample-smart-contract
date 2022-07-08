@@ -47,7 +47,7 @@ describe("Paper mint function", function () {
     quantity: number;
     tokenId: number;
     nonce: string;
-    data: Uint8Array;
+    data: string;
   };
 
   const nonce = function (length: number) {
@@ -83,7 +83,7 @@ describe("Paper mint function", function () {
       tokenId: 0,
       quantity: 1,
       nonce: ethers.utils.formatBytes32String(nonce(31)),
-      data: ethers.utils.arrayify("0x"),
+      data: "0x",
     };
 
     await contract.setPaused(false);
