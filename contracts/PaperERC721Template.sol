@@ -1,23 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.9 <0.9.0;
 
-import "@paperxyz/contracts/verification/PaperVerification.sol";
 import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /// @notice Credits to HashLips which provided the base from which this contract was derived from
-contract PaperERC721Template is
-    ERC721A,
-    Ownable,
-    ReentrancyGuard,
-    PaperVerification
-{
+contract PaperERC721Template is ERC721A, Ownable, ReentrancyGuard {
     using Strings for uint256;
 
-    string public uriPrefix =
-        "ipfs://QmZxqFxfHwqjGSYSKyVp7AR1qKQjy6Bq4YSo7GbnbnE6gc";
+    string public uriPrefix = "";
     string public uriSuffix = "";
     string public hiddenMetadataUri;
 
@@ -29,14 +22,13 @@ contract PaperERC721Template is
     bool public revealed = false;
 
     constructor(
-        address _paperKey,
         string memory _tokenName,
         string memory _tokenSymbol,
         uint256 _price,
         uint256 _maxSupply,
         uint256 _maxMintAmountPerTx,
         string memory _hiddenMetadataUri
-    ) ERC721A(_tokenName, _tokenSymbol) PaperVerification(_paperKey) {
+    ) ERC721A(_tokenName, _tokenSymbol) {
         setPrice(_price);
         maxSupply = _maxSupply;
         setMaxMintAmountPerTx(_maxMintAmountPerTx);
@@ -58,21 +50,6 @@ contract PaperERC721Template is
     modifier mintPriceCompliance(uint256 _mintAmount) {
         require(msg.value >= price * _mintAmount, "Insufficient funds!");
         _;
-    }
-
-    /// @dev Used after a user completes a fiat or cross chain crypto payment by paper's backend to mint a new token for user.
-    /// Should _not_ have price check if you intend to off ramp in Fiat or if you want dynamic pricing.
-    /// Enables custom metadata to be passed to the contract for whitelist, custom params, etc. via bytes data
-    /// @param _mintData Contains information on the tokenId, quantity, recipient and more.
-    function paperMint(PaperMintData.MintData calldata _mintData)
-        external
-        payable
-        onlyPaper(_mintData)
-        mintCompliance(_mintData.quantity)
-    {
-        // todo: your mint method here.
-        require(!paused, "The contract is paused!");
-        _safeMint(_mintData.recipient, _mintData.quantity, _mintData.data);
     }
 
     /// @dev used for native minting on Paper platform.
@@ -108,10 +85,6 @@ contract PaperERC721Template is
 
     function unclaimedSupply() external view returns (uint256) {
         return maxSupply - totalSupply();
-    }
-
-    function setPaperKey(address _paperKey) external onlyOwner {
-        _setPaperKey(_paperKey);
     }
 
     function mintForAddress(uint256 _mintAmount, address _receiver)
