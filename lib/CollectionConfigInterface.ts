@@ -7,7 +7,6 @@ interface SaleConfig {
 }
 
 export default interface CollectionConfigInterface {
-  paperKey: string;
   testnet: NetworkConfigInterface;
   mainnet: NetworkConfigInterface;
   contractName: string;
